@@ -1,4 +1,3 @@
-# kopf-postgres
 
 1. Apply CRD
 
