@@ -1,3 +1,4 @@
+from random import random
 from venv import logger
 import kopf
 from kubernetes import client, config
@@ -113,20 +114,21 @@ def create_postgres_database(body, **kwargs):
             logger.error(f"Failed to create service '{name}': {e}")
             return
     logger.info(f"input in crd object: '{input}'")
-    # return(str(input))
     
-
-
 @kopf.on.delete('postgres.example.com', 'v1', 'postgresdatabases')
 def delete_postgres_database(body, **kwargs):
     api = client.Api
 
-# @kopf.on.timer('postgres.example.com', 'v1', 'postgresdatabases')
+# @kopf.timer('postgres.example.com', 'v1', 'postgresdatabases',interval=1.0, sharp=False)
 # def scan_postgres_database(body, **kwargs):
 #     api = client.Api
 
+# @kopf.on.probe(id='Health Cheacks')
+# def get_random_value(**kwargs):
+#     return random.randint(0, 1_000_000)
+
 @kopf.on.update('postgres.example.com', 'v1', 'postgresdatabases')
-def create_postgres_database(body, **kwargs):
+def upgrade_postgres_database(body, **kwargs):
     api = client.ApiClient()
     core_v1_api = client.CoreV1Api(api)
     app_v1_api = client.AppsV1Api(api)
@@ -233,6 +235,4 @@ def create_postgres_database(body, **kwargs):
             logger.error(f"Failed to create service '{name}': {e}")
             return
     logger.info(f"input in crd object: '{input}'")
-    # return(str(input))
-    
 
