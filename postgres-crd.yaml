@@ -17,6 +17,8 @@ spec:
               properties:
                 password:
                   type: string
+                input:
+                  type: string
           required:
             - spec
   scope: Namespaced

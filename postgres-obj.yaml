@@ -1,6 +1,7 @@
 apiVersion: postgres.example.com/v1
 kind: PostgresDatabase
 metadata:
-  name: axonect-postgres-2
+  name: postgres
 spec:
   password: mysecretpassword
+  input: testing
