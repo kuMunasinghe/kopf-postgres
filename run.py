@@ -1,3 +1,4 @@
+import logging
 from random import random
 from venv import logger
 import kopf
@@ -75,6 +76,7 @@ def create_postgres_database(body, **kwargs):
     # app_v1_api.create_namespaced_deployment(namespace, deployment)
     try:
         app_v1_api.create_namespaced_deployment(namespace, deployment)
+        logger.info(f"Deployment '{name}' Created.")
     except client.exceptions.ApiException as e:
         if e.status == 409:
             logger.warning(f"Deployment '{name}' already exists.")
@@ -117,13 +119,38 @@ def create_postgres_database(body, **kwargs):
     
 @kopf.on.delete('postgres.example.com', 'v1', 'postgresdatabases')
 def delete_postgres_database(body, **kwargs):
-    api = client.Api
+    api = client.ApiClient()
+    core_v1_api = client.CoreV1Api(api)
+    app_v1_api = client.AppsV1Api(api)
+    namespace = body['metadata']['namespace']
+    name = body['metadata']['name']
+
+    try:
+        app_v1_api.delete_namespaced_deployment(name,namespace)
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
+            logger.warning(f"Deployment '{name}' not found.")
+        else:
+            # Handle other types of exceptions
+            logger.error(f"Failed to delete deployment '{name}': {e}")
+            return
+    try:
+        core_v1_api.delete_namespaced_service(name, namespace)
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
+            logger.warning(f"Service '{name}' not found.")
+        else:
+            # Handle other types of exceptions
+            logger.error(f"Failed to delete service '{name}': {e}")
+            return
+    
+    logger.info(f"Deployment '{name}' deleted.")
 
 # @kopf.timer('postgres.example.com', 'v1', 'postgresdatabases',interval=1.0, sharp=False)
 # def scan_postgres_database(body, **kwargs):
-#     api = client.Api
+#    logging.info(f"A handler is called with body: {body}")
 
-# @kopf.on.probe(id='Health Cheacks')
+# @kopf.on.probe('postgres.example.com', 'v1', 'postgresdatabases',id='Health Cheacks')
 # def get_random_value(**kwargs):
 #     return random.randint(0, 1_000_000)
 
@@ -196,12 +223,13 @@ def upgrade_postgres_database(body, **kwargs):
     # app_v1_api.create_namespaced_deployment(namespace, deployment)
     try:
         app_v1_api.create_namespaced_deployment(namespace, deployment)
+        logger.info(f"Deployment '{name}' Updated.")
     except client.exceptions.ApiException as e:
         if e.status == 409:
-            logger.warning(f"Deployment '{name}' already exists.")
+            logger.warning(f"Deployment '{name}' Updated.")
         else:
             # Handle other types of exceptions
-            logger.error(f"Failed to create deployment '{name}': {e}")
+            logger.error(f"Failed to create update '{name}': {e}")
             return
         
     service = {
@@ -229,7 +257,7 @@ def upgrade_postgres_database(body, **kwargs):
         core_v1_api.create_namespaced_service(namespace, service)
     except client.exceptions.ApiException as e:
         if e.status == 409:
-            logger.warning(f"Service '{name}' already exists.")
+            logger.warning(f"Service '{name}' Updated.")
         else:
             # Handle other types of exceptions
             logger.error(f"Failed to create service '{name}': {e}")

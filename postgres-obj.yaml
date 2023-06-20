@@ -1,7 +1,7 @@
 apiVersion: postgres.example.com/v1
 kind: PostgresDatabase
 metadata:
-  name: postgres
+  name: postgres-instance
 spec:
-  password: mysecretpassword
+  password: password
   input: testing
